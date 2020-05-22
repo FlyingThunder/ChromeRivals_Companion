@@ -18,8 +18,8 @@ class QtMainWindow(QtWidgets.QMainWindow, Output.Ui_MainWindow):
         self.CR_API_Call_upcomingMS()
         self.servertime_clock()
         self.showTime()
-        self.CR_API_Call_gameevent()
         self.sysTrayTest()
+        self.CR_API_Call_gameevent()
         self.testLabel()
         self.setStyleSheet("#MainWindow { border-image: url(6.png) 0 0 0 0 stretch stretch; }")
 
@@ -48,9 +48,6 @@ class QtMainWindow(QtWidgets.QMainWindow, Output.Ui_MainWindow):
         self.actionShow_upcoming_MS.changed.connect(lambda: self.showupcomingMS())
         self.menuRefresh.triggered.connect(lambda: self.CR_API_Call_upcomingMS())
         self.menuRefresh.triggered.connect(lambda: self.CR_API_Call_playercount())
-
-    def changeIcon(self):
-        self.tray_icon.setIcon(QtGui.QIcon("test.bmp"))
 
     def showPlayerCount(self):
         if self.actionShow_Playercount.isChecked():
@@ -81,8 +78,8 @@ class QtMainWindow(QtWidgets.QMainWindow, Output.Ui_MainWindow):
         utc_dt = datetime.now(timezone.utc)
         gmtPlusTwo = utc_dt + timedelta(0,0,0,0,0,2)
         self.timeTest.setText(str(gmtPlusTwo)[11:][:8])
-        if int(str(gmtPlusTwo)[14:][:2]) % 5 == 0:
-            if str(gmtPlusTwo)[17:][:2] == "00":
+        if int(str(gmtPlusTwo)[14:][:2]) % 5 == 1:
+            if str(gmtPlusTwo)[17:][:2] == "15":
                 self.CR_API_Call_playercount()
 
     def CR_API_Call_playercount(self):
@@ -90,19 +87,20 @@ class QtMainWindow(QtWidgets.QMainWindow, Output.Ui_MainWindow):
         data = response.json()
         self.PlayerCountLabel_ANI.setText(str(data["result"]["ani"]))
         self.PlayerCountLabel_BCU.setText(str(data["result"]["bcu"]))
-        print("showing player count")
+        print("showing player count - "+str(data["result"]["ani"])+str(data["result"]["bcu"]))
 
     def CR_API_Call_gameevent(self):
         response = requests.get("https://api.chromerivals.net/info/server/events" + self.key)
         data = response.json()
         if data["result"] == []:
             self.gameEvent.setText("No currently running game event")
+            self.tray_icon.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_ComputerIcon))
             print("still running")
             print(datetime.now())
         else:
             self.gameEvent.setText(str(data["result"]))
-            self.changeIcon()
-        QtCore.QTimer.singleShot(10000, lambda: self.CR_API_Call_gameevent())
+            self.tray_icon.setIcon(QtGui.QIcon("test.bmp"))
+        QtCore.QTimer.singleShot(60000, lambda: self.CR_API_Call_gameevent())
 
 
     def CR_API_Call_upcomingMS(self):
