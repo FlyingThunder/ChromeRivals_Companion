@@ -2,9 +2,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
 import Output
 import requests
-from datetime import datetime
-import time
-from multiprocessing import Process
+from datetime import datetime, timezone, timedelta
 
 class QtMainWindow(QtWidgets.QMainWindow, Output.Ui_MainWindow):
     check_box = None
@@ -18,7 +16,8 @@ class QtMainWindow(QtWidgets.QMainWindow, Output.Ui_MainWindow):
         self.hideWidgets()
         self.CR_API_Call_playercount()
         self.CR_API_Call_upcomingMS()
-        self.CR_API_Call_time()
+        self.servertime_clock()
+        self.showTime()
         self.CR_API_Call_gameevent()
         self.sysTrayTest()
         self.testLabel()
@@ -49,8 +48,6 @@ class QtMainWindow(QtWidgets.QMainWindow, Output.Ui_MainWindow):
         self.actionShow_upcoming_MS.changed.connect(lambda: self.showupcomingMS())
         self.menuRefresh.triggered.connect(lambda: self.CR_API_Call_upcomingMS())
         self.menuRefresh.triggered.connect(lambda: self.CR_API_Call_playercount())
-        self.menuRefresh.triggered.connect(lambda: self.CR_API_Call_time())
-        self.menuRefresh.triggered.connect(lambda: self.changeIcon())
 
     def changeIcon(self):
         self.tray_icon.setIcon(QtGui.QIcon("test.bmp"))
@@ -75,23 +72,33 @@ class QtMainWindow(QtWidgets.QMainWindow, Output.Ui_MainWindow):
             self.upcomingMSLabel_ANI_Clock.hide()
             self.upcomingMSLabel_BCU_Clock.hide()
 
-    def CR_API_Call_time(self):
-        response = requests.get("https://api.chromerivals.net/info/server/time" + self.key)
-        data = response.json()
-        newtime = datetime.fromtimestamp(data["result"]["serverTime"])
-        self.timeTest.setText(str(newtime))
+    def servertime_clock(self):
+        timer = QtCore.QTimer(self)
+        timer.timeout.connect(self.showTime)
+        timer.start(1000)
+
+    def showTime(self):
+        utc_dt = datetime.now(timezone.utc)
+        gmtPlusTwo = utc_dt + timedelta(0,0,0,0,0,2)
+        self.timeTest.setText(str(gmtPlusTwo)[11:][:8])
+        if int(str(gmtPlusTwo)[14:][:2]) % 5 == 0:
+            if str(gmtPlusTwo)[17:][:2] == "00":
+                self.CR_API_Call_playercount()
 
     def CR_API_Call_playercount(self):
         response = requests.get("https://api.chromerivals.net/info/server/usercount" + self.key)
         data = response.json()
         self.PlayerCountLabel_ANI.setText(str(data["result"]["ani"]))
         self.PlayerCountLabel_BCU.setText(str(data["result"]["bcu"]))
+        print("showing player count")
 
     def CR_API_Call_gameevent(self):
         response = requests.get("https://api.chromerivals.net/info/server/events" + self.key)
         data = response.json()
         if data["result"] == []:
             self.gameEvent.setText("No currently running game event")
+            print("still running")
+            print(datetime.now())
         else:
             self.gameEvent.setText(str(data["result"]))
             self.changeIcon()
