@@ -94,12 +94,16 @@ class QtMainWindow(QtWidgets.QMainWindow, Output.Ui_MainWindow):
         data = response.json()
         if data["result"] == []:
             self.gameEvent.setText("No currently running game event")
-            self.tray_icon.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_ComputerIcon))
+            self.tray_icon.setIcon(QtGui.QIcon("icon_blue.png"))
             print("still running")
             print(datetime.now())
         else:
             self.gameEvent.setText(str(data["result"]))
-            self.tray_icon.setIcon(QtGui.QIcon("test.bmp"))
+            print("gamevent detected at"+str(data["result"]))
+            if data["result"][0]["eventType"] == 27:
+                self.tray_icon.setIcon(QtGui.QIcon("icon_red.png"))
+            else:
+                self.tray_icon.setIcon(QtGui.QIcon("icon_green.png"))
         QtCore.QTimer.singleShot(60000, lambda: self.CR_API_Call_gameevent())
 
 
@@ -123,7 +127,7 @@ class QtMainWindow(QtWidgets.QMainWindow, Output.Ui_MainWindow):
 
     def sysTrayTest(self):
         self.tray_icon = QtWidgets.QSystemTrayIcon(self)
-        self.tray_icon.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_ComputerIcon))
+        self.tray_icon.setIcon(QtGui.QIcon("icon_blue.png"))
         tray_menu = QtWidgets.QMenu()
         show_action = QtWidgets.QAction("Show", self)
         quit_action = QtWidgets.QAction("Exit", self)
